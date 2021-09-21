@@ -1,5 +1,17 @@
 package org.javers.core.cases;
 
+import nonapi.io.github.classgraph.json.Id;
+import org.javers.core.Javers;
+import org.javers.core.JaversBuilder;
+import org.javers.repository.jql.QueryBuilder;
+import org.javers.shadow.Shadow;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Luis Miguel Cruz
  */
@@ -7,19 +19,19 @@ public class EmbeddedArrays {
   @Test
   void test() {
     Javers javers = JaversBuilder.javers().build();
-    final List<TypeOfPayment> typesOfPayment = List.of(new TypeOfPayment("payment1"));
-    final Claims claims = new Claims(List.of("item1", "item2"), typesOfPayment);
+    final List<TypeOfPayment> typesOfPayment = Arrays.asList(new TypeOfPayment("payment1"));
+    final Claims claims = new Claims(Arrays.asList("item1", "item2"), typesOfPayment);
     final SubClass section = new SubClass("section1", claims);
     MainClass lineOfBusinessSettings1 = new MainClass("id1", section);
 
     // Updating TypesOfPayment for Claims
-    final List<TypeOfPayment> typesOfPayment2 = List.of(new TypeOfPayment("payment2"));
-    final Claims claims2 = new Claims(List.of("item1", "item2"), typesOfPayment2);
+    final List<TypeOfPayment> typesOfPayment2 = Arrays.asList(new TypeOfPayment("payment2"));
+    final Claims claims2 = new Claims(Arrays.asList("item1", "item2"), typesOfPayment2);
     final SubClass section2 = new SubClass("section1", claims2);
     MainClass lineOfBusinessSettings2 = new MainClass("id1", section2);
 
     // Updating TypesOfLoss for Claims
-    final Claims claims3 = new Claims(List.of("item1", "item2", "item3"), typesOfPayment2);
+    final Claims claims3 = new Claims(Arrays.asList("item1", "item2", "item3"), typesOfPayment2);
     final SubClass section3 = new SubClass("section1", claims3);
     MainClass lineOfBusinessSettings3 = new MainClass("id1", section3);
 
@@ -27,28 +39,26 @@ public class EmbeddedArrays {
     javers.commit("test", lineOfBusinessSettings2);
     javers.commit("test", lineOfBusinessSettings3);
 
-    // Retrieving the changes on Claims
+    // Retrieving the changes on Claims (expected 3)
     List<Shadow<Claims>> id1 =
       javers.findShadows(QueryBuilder.byValueObjectId("id1", MainClass.class, "mainSection/claims").withScopeCommitDeep()
         .build());
 
     assertThat(id1).hasSize(3);
 
-    // Retrieving the changes on TypesOfLoss
+    // Retrieving the changes on TypesOfLoss (expected 2)
     List<Shadow<Object>> id2 =
       javers.findShadows(QueryBuilder.byValueObjectId("id1", MainClass.class, "mainSection/claims/typesOfLoss").withScopeCommitDeep()
         .build());
 
     assertThat(id2).hasSize(2);
 
-    // Retrieving the changes on TypesOfPayment
+    // Retrieving the changes on TypesOfPayment (expected 2)
     List<Shadow<Object>> id3 =
       javers.findShadows(QueryBuilder.byValueObjectId("id1", MainClass.class, "mainSection/claims/typesOfPayment").withScopeCommitDeep()
         .build());
 
     assertThat(id3).hasSize(2);
-
-    System.out.println();
   }
 }
 
